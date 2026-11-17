@@ -1,3 +1,21 @@
+; ============================================================
+; DOSOS OFFICE - EDIT
+; ------------------------------------------------------------
+; Text Editor
+;
+; Version:     0.1 Alpha
+; Platform:    DOSOS 16-bit
+; Architecture: x86
+; Assembler:   FASM
+;
+; Features:
+;   - Text editing
+;   - Document management
+;
+; Project: DOSOS Office Suite
+; License: GNU GPL v3.0
+; ============================================================
+
 use16
 org 0
 db 'DX16'
