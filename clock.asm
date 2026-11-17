@@ -1,7 +1,17 @@
-; DOSOS 16 VGA analog clock
-; Build: fasm clock_vga.asm CLOCK.BIN
-; Install CLOCK.BIN in the DOSOS FAT12 image and run CLOCK.
-; Exit: ESC. VGA Mode 13h, 320x200, 256 colors.
+; ============================================================
+; DOSOS OFFICE - ANALOG CLOCK
+; ------------------------------------------------------------
+; Spreadsheet Processor
+;
+; Version:     0.1 Alpha
+; Platform:    DOSOS 16-bit
+; Architecture: x86
+; Assembler:   FASM
+;
+; Project: DOSOS Office Suite
+; License: GNU GPL v3.0
+; ============================================================
+
 use16
 org 0
 db 'DX16'
