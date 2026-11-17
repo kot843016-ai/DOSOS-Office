@@ -1,20 +1,23 @@
 # DOSOS Office Suite
 
-**An experimental 16-bit office productivity suite for DOSOS.**
+**A native 16-bit productivity software collection for DOSOS.**
 
-DOSOS Office is a collection of native applications designed to bring office productivity tools to the DOSOS operating system.
+DOSOS Office is a collection of applications developed for the DOSOS operating system, providing basic office and desktop utilities.
 
 ## Applications
 
-### EDIT
+### EDIT — Text Editor
 A text editor for creating and editing text documents.
 
-### CALC
-A spreadsheet processor featuring:
+### CALC — Spreadsheet Processor
+A spreadsheet application featuring:
 - Editable spreadsheet cells
 - CSV file support
 - Formula calculations
-- Spreadsheet data editing
+- Spreadsheet data management
+
+### CLOCK — VGA Clock
+A standalone clock utility for DOSOS featuring VGA display output.
 
 ## Planned Features
 
@@ -22,20 +25,32 @@ A spreadsheet processor featuring:
 - Integrated Office Hub
 - Additional document formats
 - Expanded spreadsheet functionality
+- Further desktop utilities
 
 ## Platform
 
-- DOSOS 16-bit
-- x86 architecture
-- FASM Assembly
+- Operating system: DOSOS
+- Architecture: 16-bit x86
+- Language: Assembly
+- Assembler: Flat Assembler (FASM)
 
 ## Development Status
 
 **Early Development / Alpha**
 
-The project is actively evolving. Features and interfaces may change, and some functionality is still under development.
+DOSOS Office is actively developed. Features and interfaces may change between versions. Some planned functionality has not yet been implemented.
 
 ## License
+
+GNU General Public License v3.0 (GPL-3.0).
+
+See [LICENSE](LICENSE) for the full license text.
+
+## Project
+
+Part of the DOSOS ecosystem.
+
+Source code: https://github.com/kot843016-ai/DOSOS-Office
 
 GNU General Public License v3.0 (GPL-3.0).
 
