@@ -163,15 +163,51 @@ cmd_clear:
         mov     cx, 32
         xor     al, al
         rep     stosb
+        mov     byte [dirty], 1
         call    recalc_all
         jmp     main_loop
 
 cmd_exit:
+        cmp     byte [dirty], 0
+        je      .do_exit
+
+        push    es
+        mov     ax, 0B800h
+        mov     es, ax
+        mov     di, 24 * 160
+        mov     al, ' '
+        mov     ah, 4Fh
+        mov     cx, 80
+        rep     stosw
+        pop     es
+
+        mov     si, msg_unsaved
+        mov     dh, 24
+        mov     dl, 2
+        mov     bl, 4Fh
+        call    vga_puts
+
+.wait_yn:
+        mov     ah, 03h
+        int     60h
+        cmp     al, 27
+        je      .abort_exit
+        and     al, 0DFh
+        cmp     al, 'Y'
+        je      .do_exit
+        cmp     al, 'N'
+        je      .abort_exit
+        jmp     .wait_yn
+
+.abort_exit:
+        call    draw_help_bar
+        jmp     main_loop
+
+.do_exit:
         mov     ax, 0003h
         int     10h
         call    show_cursor
         retf
-
 cmd_edit:
         mov     byte [first_ch], 0
 cmd_edit_char:
@@ -233,6 +269,7 @@ cmd_edit_char:
         call    get_cell_ptr
         mov     si, edit_buf
         call    strcpy
+        mov     byte [dirty], 1
         call    recalc_all
 
 .cancel:
@@ -356,13 +393,14 @@ load_csv:
         je      .next_row
         cmp     bl, ','
         je      .next_col
+        cmp     bl, ';'
+        je      .next_col
         cmp     cx, 30
         jae     .cell
         mov     [di], bl
         inc     di
         inc     cx
         jmp     .cell
-
 .next_col:
         mov     byte [di], 0
         inc     ah
@@ -446,6 +484,7 @@ cmd_save:
         mov     ah, 24h
         int     60h
         mov     si, msg_saved
+        mov     byte [dirty], 0
         mov     bl, 30h
         call    flash_msg
         jmp     main_loop
@@ -575,69 +614,108 @@ mov     di, [val_dst]
 mov     [di], eax
 ret
 .chk_avg:
-cmp     byte [si+1], 'V'
-je      .do_avg
-cmp     byte [si+1], 'v'
-jne     .expr
+        mov     al, [si+1]
+        and     al, 0DFh
+        cmp     al, 'V'
+        jne     .expr
+        mov     al, [si+2]
+        and     al, 0DFh
+        cmp     al, 'E'
+        jne     .expr
+        mov     al, [si+3]
+        and     al, 0DFh
+        cmp     al, 'R'
+        jne     .expr
+        mov     al, [si+4]
+        and     al, 0DFh
+        cmp     al, 'A'
+        jne     .expr
+        mov     al, [si+5]
+        and     al, 0DFh
+        cmp     al, 'G'
+        jne     .expr
+        mov     al, [si+6]
+        and     al, 0DFh
+        cmp     al, 'E'
+        jne     .expr
 .do_avg:
-add     si, 3
-call    eval_range
-test    ecx, ecx
-jz      .avg_z
-cdq
-idiv    ecx
+        add     si, 7
+        call    eval_range
+        test    ecx, ecx
+        jz      .avg_z
+        cdq
+        idiv    ecx
 .avg_z:
-mov     di, [val_dst]
-mov     [di], eax
-ret
+        mov     di, [val_dst]
+        mov     [di], eax
+        ret
 eval_range:
-call    skip_ws
-cmp     byte [si], '('
-jne     .empty
-inc     si
-call    parse_ref
-jc      .empty
-mov     [r_start], ax
-call    skip_ws
-cmp     byte [si], ':'
-jne     .empty
-inc     si
-call    parse_ref
-jc      .empty
-mov     [r_end], ax
-xor     eax, eax
-xor     ecx, ecx
-mov     dl, byte [r_start]
+        call    skip_ws
+        cmp     byte [si], '('
+        jne     .empty
+        inc     si
+        call    parse_ref
+        jc      .empty
+        mov     [r_start], ax
+        call    skip_ws
+        cmp     byte [si], ':'
+        jne     .empty
+        inc     si
+        call    parse_ref
+        jc      .empty
+        mov     [r_end], ax
+        xor     eax, eax
+        xor     ecx, ecx
+        mov     dl, byte [r_start]
 .rl:
-cmp     dl, byte [r_end]
-ja      .done
-mov     dh, byte [r_start + 1]
+        cmp     dl, byte [r_end]
+        ja      .done
+        mov     dh, byte [r_start + 1]
 .cl:
-cmp     dh, byte [r_end + 1]
-ja      .nr
-push    eax
-push    ecx
-push    dx
-mov     al, dl
-mov     ah, dh
-call    get_val_ptr
-mov     ebx, [di]
-pop     dx
-pop     ecx
-pop     eax
-add     eax, ebx
-inc     ecx
-inc     dh
-jmp     .cl
+        cmp     dh, byte [r_end + 1]
+        ja      .nr
+        push    eax
+        push    ecx
+        push    dx
+        mov     al, dl
+        mov     ah, dh
+        call    get_cell_ptr
+        mov     bl, [di]
+        test    bl, bl
+        jz      .skip_cell
+        cmp     bl, '='
+        je      .valid_cell
+        cmp     bl, '-'
+        je      .valid_cell
+        cmp     bl, '0'
+        jb      .skip_cell
+        cmp     bl, '9'
+        ja      .skip_cell
+.valid_cell:
+        call    get_val_ptr
+        mov     ebx, [di]
+        pop     dx
+        pop     ecx
+        pop     eax
+        add     eax, ebx
+        inc     ecx
+        jmp     .next_c
+.skip_cell:
+        pop     dx
+        pop     ecx
+        pop     eax
+.next_c:
+        inc     dh
+        jmp     .cl
 .nr:
-inc     dl
-jmp     .rl
+        inc     dl
+        jmp     .rl
 .done:
-ret
+        ret
 .empty:
-xor     eax, eax
-xor     ecx, ecx
-ret
+        xor     eax, eax
+        xor     ecx, ecx
+        ret
 eval_expr:
 call    eval_term
 .loop:
@@ -1215,6 +1293,9 @@ help_str    db 'Arrows:Move  Enter/F2:Edit  Del:Clear  Ctrl+S:Save  ESC:Exit', 0
 def_name    db 'SHEET.CSV', 0
 msg_saved   db 'Saved to CSV!', 0
 msg_err     db 'Error saving CSV!', 0
+msg_unsaved db 'Unsaved changes! Exit anyway? (Y/N)', 0
+first_ch    db 0
+dirty       db 0
 cur_r       db 0
 cur_c       db 0
 top_r       db 0
@@ -1223,7 +1304,6 @@ g_row       db 0
 g_col       db 0
 col_x       db 0
 cur_y       db 0
-first_ch    db 0
 pass_cnt    db 0
 ref_c       db 0
 v_row       db 0
