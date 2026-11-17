@@ -50,10 +50,7 @@ See [LICENSE](LICENSE) for the full license text.
 
 Part of the DOSOS ecosystem.
 
-Source code: https://github.com/kot843016-ai/DOSOS-Office
-
 GNU General Public License v3.0 (GPL-3.0).
 
 ---
 
-Part of the DOSOS ecosystem.
